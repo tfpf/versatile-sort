@@ -1,12 +1,18 @@
 #include <algorithm>
+#include <chrono>
+#include <iomanip>
 #include <iostream>
 #include <iterator>
 #include <limits>
 #include <random>
 #include <vector>
 
-template <typename Type>
-Type quickselect(std::vector<Type> const& vec, size_t pos);
+// A vector is said to be small if it contains these many or fewer elements.
+size_t constexpr chunk_size = 5;
+
+// Function prototypes are required for mutually recursive functions.
+template <typename Type> Type quickselect(std::vector<Type>& vec, size_t pos, bool recursive=false);
+template <typename Type> Type get_pivot(std::vector<Type> const& vec);
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Display a vector.
@@ -43,43 +49,50 @@ Type naive_median_sandboxed(std::vector<Type> vec)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// Pick a good pivot from the elements of the given vector.
+/// Choose a good pivot for partitioning the vector. This function should not
+/// be called with small vectors.
 ///////////////////////////////////////////////////////////////////////////////
 template <typename Type>
 Type get_pivot(std::vector<Type> const& vec)
 {
-    size_t constexpr chunk_size = 5;
-    if(vec.size() <= chunk_size)
-    {
-        return naive_median_sandboxed(vec);
-    }
-
     // Find the median of each full-sized chunk of the vector.
     std::vector<Type> medians(vec.size() / chunk_size);
-    for(size_t i = 0, j = 0; i + 4 < vec.size(); i += 5, ++j)
+    for(size_t i = 0, j = 0; i + chunk_size - 1 < vec.size(); i += chunk_size, ++j)
     {
-        std::vector<Type> chunk(&vec[i], &vec[i + 5]);
-        medians[j] = naive_median(chunk);
+        std::vector<Type> chunk(&vec[i], &vec[i + chunk_size]);
+        std::sort(chunk.begin(), chunk.end());
+        medians[j] = chunk[chunk_size / 2];
     }
 
-    return quickselect(medians, medians.size() / 2);
+    return quickselect(medians, medians.size() / 2, true);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Find the element which would be at the given position in the vector if the
-/// vector were sorted.
+/// vector were sorted. If the vector is small, the element is found by
+/// actually sorting it.
 ///////////////////////////////////////////////////////////////////////////////
 template <typename Type>
-Type quickselect(std::vector<Type> const& vec, size_t pos)
+Type quickselect(std::vector<Type>& vec, size_t pos, bool recursive)
 {
-    if(vec.size() == 1)
+    if(vec.size() <= chunk_size)
     {
-        return vec[0];
+        // It is okay to mutate the input vector in a recursive call.
+        // Otherwise, it came from the original caller, and must not be
+        // modified.
+        if(recursive)
+        {
+            std::sort(vec.begin(), vec.end());
+            return vec[pos];
+        }
+        std::vector<Type> vec_copy(vec);
+        std::sort(vec_copy.begin(), vec_copy.end());
+        return vec_copy[pos];
     }
 
     // Divide the elements into three categories.
-    Type const pivot = get_pivot(vec);
-    std::vector<Type> lows, pivots, highs;
+    Type pivot = get_pivot(vec);
+    std::vector<Type> lows, highs, pivots;
     for(auto const& v: vec)
     {
         if(v < pivot)
@@ -98,34 +111,46 @@ Type quickselect(std::vector<Type> const& vec, size_t pos)
 
     if(pos < lows.size())
     {
-        return quickselect(lows, pos);
+        return quickselect(lows, pos, true);
     }
     if(pos < lows.size() + pivots.size())
     {
-        return pivots[0];
+        return pivot;
     }
-    return quickselect(highs, pos - lows.size() - pivots.size());
+    return quickselect(highs, pos - lows.size() - pivots.size(), true);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Test the implementation.
 ///////////////////////////////////////////////////////////////////////////////
-void test_quickselect(void)
+void test_quickselect(int num_of_sizes)
 {
     std::random_device device;
     std::mt19937 mersenne(device());
     std::uniform_int_distribution<int> distribution(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
     auto generator = [&distribution, &mersenne](){ return distribution(mersenne); };
-    for(int vec_size = 1; vec_size <= 1000; ++vec_size)
+    for(int vec_size = 1; vec_size <= num_of_sizes; ++vec_size)
     {
         std::vector<int> vec(vec_size);
         std::generate(vec.begin(), vec.end(), generator);
+        std::vector<int> vec_copy(vec);
         auto naive = naive_median_sandboxed(vec);
+
+        auto start = std::chrono::steady_clock::now();
         auto efficient = quickselect(vec, vec.size() / 2);
+        auto stop = std::chrono::steady_clock::now();
+        if(vec != vec_copy)
+        {
+            throw std::runtime_error("Input vector was modified!");
+        }
         if(naive != efficient)
         {
             throw std::runtime_error("Wrong result obtained!");
         }
+
+        auto delay = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
+        std::cout << std::setw(8) << vec_size << " ";
+        std::cout << std::setw(12) << delay << "\n";
     }
 }
 
@@ -134,6 +159,6 @@ void test_quickselect(void)
 ///////////////////////////////////////////////////////////////////////////////
 int main(void)
 {
-    test_quickselect();
+    test_quickselect(10000);
     return 0;
 }
