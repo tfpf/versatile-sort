@@ -8,7 +8,7 @@
 #include <vector>
 
 // A vector is said to be small if it contains these many or fewer elements.
-size_t constexpr chunk_size = 5;
+size_t constexpr chunk_size = 15;
 
 // Function prototypes are required for mutually recursive functions.
 template <typename Type> Type quickselect(std::vector<Type>& vec, size_t pos, bool recursive=false);
@@ -75,7 +75,8 @@ Type get_pivot(std::vector<Type> const& vec)
 template <typename Type>
 Type quickselect(std::vector<Type>& vec, size_t pos, bool recursive)
 {
-    if(vec.size() <= chunk_size)
+    size_t vec_size = vec.size();
+    if(vec_size <= chunk_size)
     {
         // It is okay to mutate the input vector in a recursive call.
         // Otherwise, it came from the original caller, and must not be
@@ -90,9 +91,13 @@ Type quickselect(std::vector<Type>& vec, size_t pos, bool recursive)
         return vec_copy[pos];
     }
 
-    // Divide the elements into three categories.
+    // Divide the elements into three categories: less than, greater than and
+    // equal to the pivot. There is no need to create a vector for the latter.
     Type pivot = get_pivot(vec);
-    std::vector<Type> lows, highs, pivots;
+    std::vector<Type> lows, highs;
+    lows.reserve(vec_size);
+    highs.reserve(vec_size);
+    size_t pivots_size = 0;
     for(auto const& v: vec)
     {
         if(v < pivot)
@@ -105,7 +110,7 @@ Type quickselect(std::vector<Type>& vec, size_t pos, bool recursive)
         }
         else
         {
-            pivots.push_back(v);
+            ++pivots_size;
         }
     }
 
@@ -113,11 +118,11 @@ Type quickselect(std::vector<Type>& vec, size_t pos, bool recursive)
     {
         return quickselect(lows, pos, true);
     }
-    if(pos < lows.size() + pivots.size())
+    if(pos < lows.size() + pivots_size)
     {
         return pivot;
     }
-    return quickselect(highs, pos - lows.size() - pivots.size(), true);
+    return quickselect(highs, pos - lows.size() - pivots_size, true);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
