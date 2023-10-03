@@ -66,7 +66,8 @@ partition(int arr[], size_t left, size_t right)
 }
 
 /******************************************************************************
- * Sort the elements of a subarray using quick sort.
+ * Sort the elements of a subarray using quick sort if it is large and
+ * insertion sort otherwise.
  *
  * @param arr Array.
  * @param left Lower index, inclusive.
@@ -75,10 +76,6 @@ partition(int arr[], size_t left, size_t right)
 void
 quick_sort(int arr[], size_t left, size_t right)
 {
-    if(left + 1 >= right)
-    {
-        return;
-    }
     if(left + 15 >= right)
     {
         insertion_sort(arr, left, right);
