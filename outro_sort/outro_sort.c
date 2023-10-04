@@ -29,15 +29,14 @@ insertion_sort(int arr[], size_t left, size_t right)
 }
 
 /******************************************************************************
- * Picking a suitable element (called pivot) a of a subarray, group all
- * elements less than it on one side and all elements greater than it on the
- * other.
+ * Apply Hoare's partioning scheme: group all elements less than the pivot (and
+ * possibly some elements equal to it) on one side of the pivot.
  *
  * @param arr Array.
  * @param left Lower index, inclusive.
  * @param right Higher index, exclusive.
  *
- * @return Index of the pivot.
+ * @return Partition index.
  *****************************************************************************/
 size_t
 partition(int arr[], size_t left, size_t right)
