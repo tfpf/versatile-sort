@@ -42,10 +42,7 @@ insertion_sort(int arr[], size_t left, size_t right)
 size_t
 partition(int arr[], size_t left, size_t right)
 {
-    // Decrement this index, because we use the two-pointer method here, which
-    // is more suited to closed intervals than half-open intervals.
-    --right;
-    size_t mid = (right - left) / 2 + left;
+    size_t mid = (right - 1 - left) / 2 + left;
     int pivot_val = arr[mid];
     for(;; ++left, --right)
     {
@@ -53,15 +50,15 @@ partition(int arr[], size_t left, size_t right)
         {
             ++left;
         }
-        while(arr[right] > pivot_val)
+        while(arr[right - 1] > pivot_val)
         {
             --right;
         }
-        if(left >= right)
+        if(left + 1 >= right)
         {
             return right;
         }
-        SWAP(arr[left], arr[right])
+        SWAP(arr[left], arr[right - 1])
     }
 }
 
@@ -82,7 +79,7 @@ outro_sort(int arr[], size_t left, size_t right)
         insertion_sort(arr, left, right);
         return;
     }
-    size_t partition_index_plus_one = partition(arr, left, right) + 1;
-    outro_sort(arr, left, partition_index_plus_one);
-    outro_sort(arr, partition_index_plus_one, right);
+    size_t partition_index = partition(arr, left, right);
+    outro_sort(arr, left, partition_index);
+    outro_sort(arr, partition_index, right);
 }
