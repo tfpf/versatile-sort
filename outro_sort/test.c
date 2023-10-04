@@ -55,7 +55,7 @@ main(int const argc, char const *argv[])
         }
     }
 
-    srand(0);
+    srand(time(NULL));
     int *arr = malloc(arr_size * sizeof *arr);
     for(size_t i = 0; i < arr_size; ++i)
     {
