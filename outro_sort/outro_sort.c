@@ -81,7 +81,7 @@ outro_sort(int arr[], size_t left, size_t right)
         insertion_sort(arr, left, right);
         return;
     }
-    size_t pivot_index_plus_one = partition(arr, left, right) + 1;
-    outro_sort(arr, left, pivot_index_plus_one);
-    outro_sort(arr, pivot_index_plus_one, right);
+    size_t partition_index_plus_one = partition(arr, left, right) + 1;
+    outro_sort(arr, left, partition_index_plus_one);
+    outro_sort(arr, partition_index_plus_one, right);
 }
