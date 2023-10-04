@@ -36,7 +36,8 @@ insertion_sort(int arr[], size_t left, size_t right)
  * @param left Lower index, inclusive.
  * @param right Higher index, exclusive.
  *
- * @return Partition index.
+ * @return Partition index. All elements at lower indices will be less than or
+ *     equal to the pivot.
  *****************************************************************************/
 size_t
 partition(int arr[], size_t left, size_t right)
