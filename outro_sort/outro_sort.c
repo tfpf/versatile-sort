@@ -5,24 +5,23 @@
 /******************************************************************************
  * Sort the elements of a subarray using insertion sort.
  *
- * @param arr Array.
- * @param left Lower index, inclusive.
- * @param right Higher index, exclusive.
+ * @param begin Pointer to the first element.
+ * @param end Pointer to one past the last element.
  *****************************************************************************/
 void
-insertion_sort(int arr[], size_t left, size_t right)
+insertion_sort(int *begin, int *end)
 {
-    if(left + 1 >= right)
+    if(begin + 1 >= end)
     {
         return;
     }
-    for(size_t i = left + 1; i < right; ++i)
+    for(int *curr = begin + 1; curr < end; ++curr)
     {
-        for(size_t j = i; j > left; --j)
+        for(int *gap = curr; gap > begin; --gap)
         {
-            if(arr[j - 1] > arr[j])
+            if(*(gap - 1) > *gap)
             {
-                SWAP(arr[j - 1], arr[j])
+                SWAP(*(gap - 1), *gap)
             }
         }
     }
@@ -76,7 +75,7 @@ outro_sort(int arr[], size_t left, size_t right)
 {
     if(left + 15 >= right)
     {
-        insertion_sort(arr, left, right);
+        insertion_sort(arr + left, arr + right);
         return;
     }
     size_t partition_index = partition(arr, left, right);
