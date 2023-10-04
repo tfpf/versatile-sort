@@ -7,7 +7,7 @@
 #include <time.h>
 
 void insertion_sort(int arr[], size_t lo, size_t hi);
-void quick_sort(int arr[], size_t lo, size_t hi);
+void outro_sort(int arr[], size_t lo, size_t hi);
 
 /******************************************************************************
  * Check whether the sorting algorithm works correctly.
@@ -60,7 +60,7 @@ main(int const argc, char const *argv[])
     {
         arr[i] = rand();
     }
-    test(arr, arr_size, quick_sort);
+    test(arr, arr_size, outro_sort);
     free(arr);
     return EXIT_SUCCESS;
 }

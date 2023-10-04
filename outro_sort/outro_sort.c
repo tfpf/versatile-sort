@@ -29,15 +29,15 @@ insertion_sort(int arr[], size_t left, size_t right)
 }
 
 /******************************************************************************
- * Picking a suitable element (called pivot) a of a subarray, group all
- * elements less than it on one side and all elements greater than it on the
- * other.
+ * Apply Hoare's partioning scheme: group all elements less than the pivot (and
+ * possibly some elements equal to it) on one side of the pivot.
  *
  * @param arr Array.
  * @param left Lower index, inclusive.
  * @param right Higher index, exclusive.
  *
- * @return Index of the pivot.
+ * @return Partition index. All elements at lower indices will be less than or
+ *     equal to the pivot.
  *****************************************************************************/
 size_t
 partition(int arr[], size_t left, size_t right)
@@ -66,22 +66,23 @@ partition(int arr[], size_t left, size_t right)
 }
 
 /******************************************************************************
- * Sort the elements of a subarray using quick sort if it is large and
- * insertion sort otherwise.
+ * Sort the elements of a subarray using outro sort. This is a hybrid algorithm
+ * which executes insertion sort on small subarrays and quick sort on large
+ * subarrays.
  *
  * @param arr Array.
  * @param left Lower index, inclusive.
  * @param right Higher index, exclusive.
  *****************************************************************************/
 void
-quick_sort(int arr[], size_t left, size_t right)
+outro_sort(int arr[], size_t left, size_t right)
 {
     if(left + 15 >= right)
     {
         insertion_sort(arr, left, right);
         return;
     }
-    size_t pivot_index_plus_one = partition(arr, left, right) + 1;
-    quick_sort(arr, left, pivot_index_plus_one);
-    quick_sort(arr, pivot_index_plus_one, right);
+    size_t partition_index_plus_one = partition(arr, left, right) + 1;
+    outro_sort(arr, left, partition_index_plus_one);
+    outro_sort(arr, partition_index_plus_one, right);
 }
