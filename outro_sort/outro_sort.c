@@ -66,15 +66,16 @@ partition(int arr[], size_t left, size_t right)
 }
 
 /******************************************************************************
- * Sort the elements of a subarray using quick sort if it is large and
- * insertion sort otherwise.
+ * Sort the elements of a subarray using outro sort. This is a hybrid algorithm
+ * which executes insertion sort on small subarrays and quick sort on large
+ * subarrays.
  *
  * @param arr Array.
  * @param left Lower index, inclusive.
  * @param right Higher index, exclusive.
  *****************************************************************************/
 void
-quick_sort(int arr[], size_t left, size_t right)
+outro_sort(int arr[], size_t left, size_t right)
 {
     if(left + 15 >= right)
     {
@@ -82,6 +83,6 @@ quick_sort(int arr[], size_t left, size_t right)
         return;
     }
     size_t pivot_index_plus_one = partition(arr, left, right) + 1;
-    quick_sort(arr, left, pivot_index_plus_one);
-    quick_sort(arr, pivot_index_plus_one, right);
+    outro_sort(arr, left, pivot_index_plus_one);
+    outro_sort(arr, pivot_index_plus_one, right);
 }
