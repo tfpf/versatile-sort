@@ -6,21 +6,22 @@
 #include <stdlib.h>
 #include <time.h>
 
-void insertion_sort(int arr[], size_t lo, size_t hi);
-void outro_sort(int arr[], size_t lo, size_t hi);
+void insertion_sort(int[], size_t, size_t);
+void outro_sort(int[], size_t, size_t);
 
 /******************************************************************************
  * Check whether the sorting algorithm works correctly.
  *
  * @param arr Array.
  * @param arr_size Number of elements in the array.
+ * @param sorter Sort function.
  *****************************************************************************/
 void
-test(int arr[], size_t arr_size, void (*func)(int[], size_t, size_t))
+test(int arr[], size_t arr_size, void (*sorter)(int[], size_t, size_t))
 {
     struct timespec begin, end;
     clock_gettime(CLOCK_REALTIME, &begin);
-    func(arr, 0, arr_size);
+    sorter(arr, 0, arr_size);
     clock_gettime(CLOCK_REALTIME, &end);
     for(size_t i = 1; i < arr_size; ++i)
     {
