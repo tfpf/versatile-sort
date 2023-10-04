@@ -3,6 +3,19 @@
 #define SWAP(a, b) int tmp = a; a = b; b = tmp;
 
 /******************************************************************************
+ * Exchange the integers stored at the given addresses.
+ *
+ * @param a
+ * @param b
+ *****************************************************************************/
+void swap(int *a, int *b)
+{
+    int tmp = *a;
+    *a = *b;
+    *b = tmp;
+}
+
+/******************************************************************************
  * Sort the elements of a subarray using insertion sort.
  *
  * @param begin Pointer to the first element.
@@ -21,7 +34,7 @@ insertion_sort(int *begin, int *end)
         {
             if(*(gap - 1) > *gap)
             {
-                SWAP(*(gap - 1), *gap)
+                swap(gap - 1, gap);
             }
         }
     }
@@ -66,19 +79,18 @@ partition(int arr[], size_t left, size_t right)
  * which executes insertion sort on small subarrays and quick sort on large
  * subarrays.
  *
- * @param arr Array.
- * @param left Lower index, inclusive.
- * @param right Higher index, exclusive.
+ * @param begin Pointer to the first element.
+ * @param end Pointer to one past the last element.
  *****************************************************************************/
 void
-outro_sort(int arr[], size_t left, size_t right)
+outro_sort(int *begin, int *end)
 {
-    if(left + 15 >= right)
+    if(begin + 15 >= end)
     {
-        insertion_sort(arr + left, arr + right);
+        insertion_sort(begin, end);
         return;
     }
-    size_t partition_index = partition(arr, left, right);
-    outro_sort(arr, left, partition_index);
-    outro_sort(arr, partition_index, right);
+    size_t partition_index = partition(begin, 0, end - begin);
+    outro_sort(begin, begin + partition_index);
+    outro_sort(begin + partition_index, end);
 }
