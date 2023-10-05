@@ -120,13 +120,10 @@ outro_sort(int *begin, int *end)
     if(begin + 32768L <= end)
     {
         struct Interval lt_interval = {.begin=begin, .end=ploc};
-        thrd_t lt;
-        int lt_status = thrd_create(&lt, outro_sort_wrapper, &lt_interval);
-
         struct Interval rt_interval = {.begin=ploc, .end=end};
-        thrd_t rt;
+        thrd_t lt, rt;
+        int lt_status = thrd_create(&lt, outro_sort_wrapper, &lt_interval);
         int rt_status = thrd_create(&rt, outro_sort_wrapper, &rt_interval);
-
         lt_status == thrd_success ? thrd_join(lt, NULL) : outro_sort(begin, ploc);
         rt_status == thrd_success ? thrd_join(rt, NULL) : outro_sort(ploc, end);
     }
