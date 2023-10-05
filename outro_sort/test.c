@@ -66,7 +66,7 @@ benchmark(void (*sorter)(int *, int *), size_t arr_size)
 {
     int long long nanoseconds = 0;
     int *arr = malloc(arr_size * sizeof *arr);
-    for(int i = 0; i < 64; ++i)
+    for(int i = 0; i < 16; ++i)
     {
         fill(arr, arr + arr_size);
         struct timespec start, stop;
@@ -77,7 +77,7 @@ benchmark(void (*sorter)(int *, int *), size_t arr_size)
         nanoseconds += 1000000000L * (stop.tv_sec - start.tv_sec);
     }
     free(arr);
-    nanoseconds /= 64;
+    nanoseconds /= 16;
     printf("%.3lf ms\n", nanoseconds / 1000000.0);
 }
 
@@ -87,7 +87,7 @@ benchmark(void (*sorter)(int *, int *), size_t arr_size)
 int
 main(int const argc, char const *argv[])
 {
-    size_t arr_size = 65536UL;
+    size_t arr_size = 1048576UL;
     if(argc > 1)
     {
         char *endptr;
