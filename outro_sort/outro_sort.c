@@ -4,7 +4,7 @@
  * @param a
  * @param b
  *****************************************************************************/
-void
+static void
 swap(int *a, int *b)
 {
     int tmp = *a;
@@ -18,7 +18,7 @@ swap(int *a, int *b)
  * @param begin Pointer to the first element.
  * @param end Pointer to one past the last element.
  *****************************************************************************/
-void
+static void
 insertion_sort(int *begin, int *end)
 {
     if(begin + 1 >= end)
@@ -47,7 +47,7 @@ insertion_sort(int *begin, int *end)
  * @return Partition pointer. All elements at lower addresses will be less than
  *     or equal to the pivot.
  *****************************************************************************/
-int *
+static int *
 partition(int *begin, int *end)
 {
     int *pivot_loc = (end - 1 - begin) / 2 + begin;
