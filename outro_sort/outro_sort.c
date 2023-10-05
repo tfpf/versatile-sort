@@ -1,7 +1,13 @@
 #include <stddef.h>
 
-#ifndef __STDC_NO_THREADS__
+#if !defined __STDC_NO_THREADS__ && !defined __STDC_NO_ATOMICS__
+#define MULTITHREADED_OUTRO_SORT
+#endif
+
+#ifdef MULTITHREADED_OUTRO_SORT
+#include <stdatomic.h>
 #include <threads.h>
+static atomic_int active_threads = 0;
 #endif
 
 void outro_sort(int *, int *);
@@ -116,16 +122,18 @@ outro_sort(int *begin, int *end)
         return;
     }
     int *ploc = partition(begin, end);
-#ifndef __STDC_NO_THREADS__
-    if(begin + 32768L <= end)
+#ifdef MULTITHREADED_OUTRO_SORT
+    if(begin + 32768L <= end && active_threads < 64)
     {
         struct Interval lt_interval = {.begin=begin, .end=ploc};
         struct Interval rt_interval = {.begin=ploc, .end=end};
         thrd_t lt, rt;
+        active_threads += 2;
         int lt_status = thrd_create(&lt, outro_sort_wrapper, &lt_interval);
         int rt_status = thrd_create(&rt, outro_sort_wrapper, &rt_interval);
         lt_status == thrd_success ? thrd_join(lt, NULL) : outro_sort(begin, ploc);
         rt_status == thrd_success ? thrd_join(rt, NULL) : outro_sort(ploc, end);
+        active_threads -= 2;
     }
     else
 #endif
