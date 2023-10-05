@@ -56,12 +56,38 @@ test(void (*sorter)(int *, int *), size_t arr_size)
 }
 
 /******************************************************************************
+ * Measure the running time of the sorting algorithm.
+ *
+ * @param sorter Sort function.
+ * @param arr_size Number of elements to sort.
+ *****************************************************************************/
+void
+benchmark(void (*sorter)(int *, int *), size_t arr_size)
+{
+    int long long nanoseconds = 0;
+    int *arr = malloc(arr_size * sizeof *arr);
+    for(int i = 0; i < 64; ++i)
+    {
+        fill(arr, arr + arr_size);
+        struct timespec start, stop;
+        clock_gettime(CLOCK_REALTIME, &start);
+        sorter(arr, arr + arr_size);
+        clock_gettime(CLOCK_REALTIME, &stop);
+        nanoseconds += stop.tv_nsec - start.tv_nsec;
+        nanoseconds += 1000000000L * (stop.tv_sec - start.tv_sec);
+    }
+    free(arr);
+    nanoseconds /= 64;
+    printf("%.3lf ms\n", nanoseconds / 1000000.0);
+}
+
+/******************************************************************************
  * Main function.
  *****************************************************************************/
 int
 main(int const argc, char const *argv[])
 {
-    size_t arr_size = 1048576UL;
+    size_t arr_size = 65536UL;
     if(argc > 1)
     {
         char *endptr;
