@@ -12,30 +12,45 @@ void outro_sort(int *, int *);
 /******************************************************************************
  * Check whether the sorting algorithm works correctly.
  *
- * @param arr Array.
- * @param arr_size Number of elements in the array.
  * @param sorter Sort function.
+ * @param begin Pointer to the first element.
+ * @param end Pointer to one past the last element.
  *****************************************************************************/
 void
-test(int arr[], size_t arr_size, void (*sorter)(int *, int *))
+test(void (*sorter)(int *, int *), int *begin, int *end)
 {
-    struct timespec begin, end;
-    clock_gettime(CLOCK_REALTIME, &begin);
-    sorter(arr, arr + arr_size);
-    clock_gettime(CLOCK_REALTIME, &end);
-    for(size_t i = 1; i < arr_size; ++i)
+    struct timespec start, stop;
+    clock_gettime(CLOCK_REALTIME, &start);
+    sorter(begin, end);
+    clock_gettime(CLOCK_REALTIME, &stop);
+    for(int const *curr = begin + 1; curr < end; ++curr)
     {
-        assert(arr[i - 1] <= arr[i]);
+        assert(*(curr - 1) <= *curr);
     }
 
-    int tv_sec = end.tv_sec - begin.tv_sec;
-    int long tv_nsec = end.tv_nsec - begin.tv_nsec;
+    int tv_sec = stop.tv_sec - start.tv_sec;
+    int long tv_nsec = stop.tv_nsec - start.tv_nsec;
     if(tv_nsec < 0)
     {
         --tv_sec;
         tv_nsec += 1000000000L;
     }
     printf("%d.%06ld s\n", tv_sec, tv_nsec / 1000L);
+}
+
+/******************************************************************************
+ * Populate an array with random values.
+ *
+ * @param begin Pointer to the first element.
+ * @param end Pointer to one past the last element.
+ *****************************************************************************/
+void
+fill(int *begin, int *end)
+{
+    for(int *curr = begin; curr < end; ++curr)
+    {
+        *curr = rand();
+    }
 }
 
 /******************************************************************************
@@ -57,11 +72,8 @@ main(int const argc, char const *argv[])
 
     srand(time(NULL));
     int *arr = malloc(arr_size * sizeof *arr);
-    for(size_t i = 0; i < arr_size; ++i)
-    {
-        arr[i] = rand();
-    }
-    test(arr, arr_size, outro_sort);
+    fill(arr, arr + arr_size);
+    test(outro_sort, arr, arr + arr_size);
     free(arr);
     return EXIT_SUCCESS;
 }
