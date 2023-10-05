@@ -1,64 +1,72 @@
-#include <stddef.h>
-
-#define SWAP(a, b) int tmp = a; a = b; b = tmp;
+/******************************************************************************
+ * Exchange the integers stored at the given addresses.
+ *
+ * @param a
+ * @param b
+ *****************************************************************************/
+static void
+swap(int *a, int *b)
+{
+    int tmp = *a;
+    *a = *b;
+    *b = tmp;
+}
 
 /******************************************************************************
  * Sort the elements of a subarray using insertion sort.
  *
- * @param arr Array.
- * @param left Lower index, inclusive.
- * @param right Higher index, exclusive.
+ * @param begin Pointer to the first element.
+ * @param end Pointer to one past the last element.
  *****************************************************************************/
-void
-insertion_sort(int arr[], size_t left, size_t right)
+static void
+insertion_sort(int *begin, int *end)
 {
-    if(left + 1 >= right)
+    if(begin + 1 >= end)
     {
         return;
     }
-    for(size_t i = left + 1; i < right; ++i)
+    for(int *curr = begin + 1; curr < end; ++curr)
     {
-        for(size_t j = i; j > left; --j)
+        for(int *gap = curr; gap > begin; --gap)
         {
-            if(arr[j - 1] > arr[j])
+            if(*(gap - 1) > *gap)
             {
-                SWAP(arr[j - 1], arr[j])
+                swap(gap - 1, gap);
             }
         }
     }
 }
 
 /******************************************************************************
- * Apply Hoare's partioning scheme: group all elements less than the pivot (and
- * possibly some elements equal to it) on one side of the pivot.
+ * Apply Hoare's partioning scheme to a subarray: group all elements less than
+ * the pivot (and possibly some elements equal to it) on one side of the pivot.
  *
- * @param arr Array.
- * @param left Lower index, inclusive.
- * @param right Higher index, exclusive.
+ * @param begin Pointer to the first element.
+ * @param end Pointer to one past the last element.
  *
- * @return Partition index. All elements at lower indices will be less than or
- *     equal to the pivot.
+ * @return Partition pointer. All elements at lower addresses will be less than
+ *     or equal to the pivot.
  *****************************************************************************/
-size_t
-partition(int arr[], size_t left, size_t right)
+static int *
+partition(int *begin, int *end)
 {
-    size_t mid = (right - 1 - left) / 2 + left;
-    int pivot_val = arr[mid];
-    for(;; ++left, --right)
+    int *pivot_loc = (end - 1 - begin) / 2 + begin;
+    int pivot_val = *pivot_loc;
+    for(;; ++begin, --end)
     {
-        while(arr[left] < pivot_val)
+        while(*begin < pivot_val)
         {
-            ++left;
+            ++begin;
         }
-        while(arr[right - 1] > pivot_val)
+        while(*(end - 1) > pivot_val)
         {
-            --right;
+            --end;
         }
-        if(left + 1 >= right)
+        if(begin + 1 >= end)
         {
-            return right;
+            return end;
         }
-        SWAP(arr[left], arr[right - 1])
+        swap(begin, end - 1);
     }
 }
 
@@ -67,19 +75,18 @@ partition(int arr[], size_t left, size_t right)
  * which executes insertion sort on small subarrays and quick sort on large
  * subarrays.
  *
- * @param arr Array.
- * @param left Lower index, inclusive.
- * @param right Higher index, exclusive.
+ * @param begin Pointer to the first element.
+ * @param end Pointer to one past the last element.
  *****************************************************************************/
 void
-outro_sort(int arr[], size_t left, size_t right)
+outro_sort(int *begin, int *end)
 {
-    if(left + 15 >= right)
+    if(begin + 15 >= end)
     {
-        insertion_sort(arr, left, right);
+        insertion_sort(begin, end);
         return;
     }
-    size_t partition_index = partition(arr, left, right);
-    outro_sort(arr, left, partition_index);
-    outro_sort(arr, partition_index, right);
+    int *ploc = partition(begin, end);
+    outro_sort(begin, ploc);
+    outro_sort(ploc, end);
 }
