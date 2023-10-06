@@ -16,4 +16,4 @@ integers. It is faster than the `std::sort` function of the C++ standard library
 | 2<sup>23</sup> | 1627 ms     | 366 ms       |
 | 2<sup>24</sup> | 3330 ms     | 714 ms       |
 
-These are the running times reported on my 4C/8T for random arrays.
+These are the running times reported on my 4C/8T machine for random arrays.
