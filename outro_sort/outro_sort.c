@@ -38,7 +38,7 @@ swap(int *a, int *b)
  * @param begin Pointer to the first element.
  * @param end Pointer to one past the last element.
  *****************************************************************************/
-static void
+void
 insertion_sort(int *begin, int *end)
 {
     if(begin + 1 >= end)
