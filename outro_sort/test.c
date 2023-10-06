@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <time.h>
 
+#define ITERATIONS 16
+
 void insertion_sort(int *, int *);
 void outro_sort(int *, int *);
 
@@ -66,7 +68,7 @@ benchmark(void (*sorter)(int *, int *), size_t arr_size)
 {
     int long long nanoseconds = 0;
     int *arr = malloc(arr_size * sizeof *arr);
-    for(int i = 0; i < 16; ++i)
+    for(int i = 0; i < ITERATIONS; ++i)
     {
         fill(arr, arr + arr_size);
         struct timespec start, stop;
@@ -77,7 +79,7 @@ benchmark(void (*sorter)(int *, int *), size_t arr_size)
         nanoseconds += 1000000000L * (stop.tv_sec - start.tv_sec);
     }
     free(arr);
-    nanoseconds /= 16;
+    nanoseconds /= ITERATIONS;
     printf("%.3lf ms\n", nanoseconds / 1000000.0);
 }
 
@@ -87,7 +89,7 @@ benchmark(void (*sorter)(int *, int *), size_t arr_size)
 int
 main(int const argc, char const *argv[])
 {
-    size_t arr_size = 1048576UL;
+    size_t arr_size = 1UL << 20;
     if(argc > 1)
     {
         char *endptr;

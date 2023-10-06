@@ -1,3 +1,24 @@
+#include <stddef.h>
+#include <stdlib.h>
+
+#if !defined __STDC_NO_THREADS__ && !defined __STDC_NO_ATOMICS__
+#define MULTITHREADED_OUTRO_SORT
+#endif
+
+#ifdef MULTITHREADED_OUTRO_SORT
+#include <stdatomic.h>
+#include <threads.h>
+static atomic_int active_threads = 0;
+#endif
+
+void outro_sort(int *, int *);
+
+struct Interval
+{
+    int *begin;
+    int *end;
+};
+
 /******************************************************************************
  * Exchange the integers stored at the given addresses.
  *
@@ -18,7 +39,7 @@ swap(int *a, int *b)
  * @param begin Pointer to the first element.
  * @param end Pointer to one past the last element.
  *****************************************************************************/
-static void
+void
 insertion_sort(int *begin, int *end)
 {
     if(begin + 1 >= end)
@@ -70,6 +91,23 @@ partition(int *begin, int *end)
     }
 }
 
+#ifdef MULTITHREADED_OUTRO_SORT
+/******************************************************************************
+ * Helper function to perform outro sort.
+ *
+ * @param interval_ Sort range.
+ *
+ * @return Ignored.
+ *****************************************************************************/
+static int
+outro_sort_(void *interval_)
+{
+    struct Interval *interval = interval_;
+    outro_sort(interval->begin, interval->end);
+    thrd_exit(EXIT_SUCCESS);
+}
+#endif
+
 /******************************************************************************
  * Sort the elements of a subarray using outro sort. This is a hybrid algorithm
  * which executes insertion sort on small subarrays and quick sort on large
@@ -81,12 +119,41 @@ partition(int *begin, int *end)
 void
 outro_sort(int *begin, int *end)
 {
-    if(begin + 15 >= end)
+    if(begin + 16 >= end)
     {
         insertion_sort(begin, end);
         return;
     }
     int *ploc = partition(begin, end);
-    outro_sort(begin, ploc);
+
+    // First recursive call in a separate thread (if possible).
+#ifdef MULTITHREADED_OUTRO_SORT
+    thrd_t worker;
+    int wstatus = thrd_error;
+    if(begin + 32768L <= ploc && active_threads < 32)
+    {
+        struct Interval interval = {.begin=begin, .end=ploc};
+        wstatus = thrd_create(&worker, outro_sort_, &interval);
+        if(wstatus == thrd_success)
+        {
+            ++active_threads;
+        }
+    }
+    if(wstatus != thrd_success)
+#endif
+    {
+        outro_sort(begin, ploc);
+    }
+
+    // Second recursive call in the current thread.
     outro_sort(ploc, end);
+
+    // Join the other thread.
+#ifdef MULTITHREADED_OUTRO_SORT
+    if(wstatus == thrd_success)
+    {
+        thrd_join(worker, NULL);
+        --active_threads;
+    }
+#endif
 }
