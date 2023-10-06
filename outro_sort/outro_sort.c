@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdlib.h>
 
 #if !defined __STDC_NO_THREADS__ && !defined __STDC_NO_ATOMICS__
 #define MULTITHREADED_OUTRO_SORT
@@ -103,7 +104,7 @@ outro_sort_(void *interval_)
 {
     struct Interval *interval = interval_;
     outro_sort(interval->begin, interval->end);
-    thrd_exit(0);
+    thrd_exit(EXIT_SUCCESS);
 }
 #endif
 
