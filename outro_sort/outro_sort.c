@@ -90,20 +90,22 @@ partition(int *begin, int *end)
     }
 }
 
+#ifdef MULTITHREADED_OUTRO_SORT
 /******************************************************************************
  * Helper function to perform outro sort.
  *
- * @param arg_ Sort range.
+ * @param interval_ Sort range.
  *
  * @return Ignored.
  *****************************************************************************/
-int
-outro_sort_wrapper(void *arg_)
+static int
+outro_sort_(void *interval_)
 {
-    struct Interval *arg = arg_;
-    outro_sort(arg->begin, arg->end);
+    struct Interval *interval = interval_;
+    outro_sort(interval->begin, interval->end);
     thrd_exit(0);
 }
+#endif
 
 /******************************************************************************
  * Sort the elements of a subarray using outro sort. This is a hybrid algorithm
@@ -122,23 +124,35 @@ outro_sort(int *begin, int *end)
         return;
     }
     int *ploc = partition(begin, end);
+
+    // First recursive call in a separate thread (if possible).
 #ifdef MULTITHREADED_OUTRO_SORT
-    if(begin + 32768L <= end && active_threads < 64)
+    thrd_t worker;
+    int wstatus = thrd_error;
+    if(begin + 32768L <= ploc && active_threads < 32)
     {
-        struct Interval lt_interval = {.begin=begin, .end=ploc};
-        struct Interval rt_interval = {.begin=ploc, .end=end};
-        thrd_t lt, rt;
-        active_threads += 2;
-        int lt_status = thrd_create(&lt, outro_sort_wrapper, &lt_interval);
-        int rt_status = thrd_create(&rt, outro_sort_wrapper, &rt_interval);
-        lt_status == thrd_success ? thrd_join(lt, NULL) : outro_sort(begin, ploc);
-        rt_status == thrd_success ? thrd_join(rt, NULL) : outro_sort(ploc, end);
-        active_threads -= 2;
+        struct Interval interval = {.begin=begin, .end=ploc};
+        wstatus = thrd_create(&worker, outro_sort_, &interval);
+        if(wstatus == thrd_success)
+        {
+            ++active_threads;
+        }
     }
-    else
+    if(wstatus != thrd_success)
 #endif
     {
         outro_sort(begin, ploc);
-        outro_sort(ploc, end);
     }
+
+    // Second recursive call in the current thread.
+    outro_sort(ploc, end);
+
+    // Join the other thread.
+#ifdef MULTITHREADED_OUTRO_SORT
+    if(wstatus == thrd_success)
+    {
+        thrd_join(worker, NULL);
+        --active_threads;
+    }
+#endif
 }
