@@ -74,7 +74,7 @@ partition(int *begin, int *end)
     int *pivot_loc = (end - 1 - begin) / 2 + begin;
     int pivot_val = *pivot_loc;
 
-    // Do not pick the least or greatest element as the pivot.
+    // TODO Do not pick the least or greatest element as the pivot.
     pivot_val = pivot_val > *begin ? pivot_val : *begin;
     pivot_val = pivot_val < *(end - 1) ? pivot_val : *(end - 1);
 
