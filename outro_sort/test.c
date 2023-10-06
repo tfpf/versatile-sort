@@ -10,6 +10,7 @@
 
 void insertion_sort(int *, int *);
 void outro_sort(int *, int *);
+void std_sort(int *begin, int *end);
 
 /******************************************************************************
  * Populate the array with random values.
