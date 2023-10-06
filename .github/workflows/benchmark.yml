@@ -1,0 +1,12 @@
+name: benchmark
+on: [push, workflow_dispatch]
+
+jobs:
+  benchmark:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-12, ubuntu-22.04]
+    steps:
+      - uses: actions/checkout@v4
+      - run: cd outro_sort && make && ./test
