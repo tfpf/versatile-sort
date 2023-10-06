@@ -9,5 +9,5 @@ jobs:
         os: [macos-12, ubuntu-22.04]
     steps:
       - uses: actions/checkout@v4
-      - run: cd outro_sort && make -B CPPFLAGS=-D__STDC_NO_THREADS__ && ./test
-      - run: cd outro_sort && make && ./test
+      - run: cd outro_sort && make CPPFLAGS=-D__STDC_NO_THREADS__ && ./test
+      - run: cd outro_sort && make -B && ./test
