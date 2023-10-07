@@ -5,9 +5,6 @@
 
 #if !defined __STDC_NO_THREADS__ && !defined __STDC_NO_ATOMICS__
 #define MULTITHREADED_OUTRO_SORT
-#endif
-
-#ifdef MULTITHREADED_OUTRO_SORT
 #include <stdatomic.h>
 #include <threads.h>
 static atomic_int available_threads = 32;
