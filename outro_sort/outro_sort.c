@@ -153,6 +153,33 @@ outro_sort_(void *interval_)
 #endif
 
 /******************************************************************************
+ * Helper function to perform outro sort in a separate thread (if possible).
+ *
+ * @param begin Pointer to the first element.
+ * @param end Pointer to one past the last element.
+ * @param worker Thread to start.
+ *
+ * @return 0 if the thread was started, else -1.
+ *****************************************************************************/
+static int
+outro_sort__(int *begin, int *end, void *thr)
+{
+#ifdef MULTITHREADED_OUTRO_SORT
+    if(begin + multithreading_threshold <= end && available_threads > 1)
+    {
+        struct Interval interval = {.begin=begin, .end=end};
+        if(thrd_create(thr, outro_sort_, &interval) == thrd_success)
+        {
+            --available_threads;
+            return 0;
+        }
+    }
+#endif
+    outro_sort(begin, end);
+    return -1;
+}
+
+/******************************************************************************
  * Sort the elements of a subarray using outro sort. This is a hybrid algorithm
  * which executes insertion sort on small subarrays and quick sort on large
  * subarrays.
@@ -170,31 +197,16 @@ outro_sort(int *begin, int *end)
     }
     int *ploc = partition(begin, end);
 
-    // First recursive call in a separate thread (if possible).
 #ifdef MULTITHREADED_OUTRO_SORT
     thrd_t worker;
-    int wstatus = thrd_error;
-    if(begin + multithreading_threshold <= ploc && available_threads > 1)
-    {
-        struct Interval interval = {.begin=begin, .end=ploc};
-        wstatus = thrd_create(&worker, outro_sort_, &interval);
-        if(wstatus == thrd_success)
-        {
-            --available_threads;
-        }
-    }
-    if(wstatus != thrd_success)
+#else
+    int worker;
 #endif
-    {
-        outro_sort(begin, ploc);
-    }
-
-    // Second recursive call in the current thread.
+    int wstatus = outro_sort__(begin, ploc, &worker);
     outro_sort(ploc, end);
 
-    // Join the other thread.
 #ifdef MULTITHREADED_OUTRO_SORT
-    if(wstatus == thrd_success)
+    if(wstatus == 0)
     {
         thrd_join(worker, NULL);
         ++available_threads;
