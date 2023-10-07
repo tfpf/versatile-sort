@@ -1,23 +1,52 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#include "outro_sort.h"
+
 #if !defined __STDC_NO_THREADS__ && !defined __STDC_NO_ATOMICS__
 #define MULTITHREADED_OUTRO_SORT
-#endif
-
-#ifdef MULTITHREADED_OUTRO_SORT
 #include <stdatomic.h>
 #include <threads.h>
-static atomic_int active_threads = 0;
+static atomic_int available_threads = 32;
+static size_t multithreading_threshold = 32768U;
 #endif
-
-void outro_sort(int *, int *);
 
 struct Interval
 {
     int *begin;
     int *end;
 };
+
+/******************************************************************************
+ * Set the number of threads to use while performing outro sort. (This need not
+ * be equal to the number of logical processors; typically, using a much larger
+ * number will significantly improve performance.) If multithreading is not
+ * supported, this function does nothing.
+ *
+ * @param available_threads_
+ *****************************************************************************/
+void
+outro_sort_set_available_threads(int available_threads_)
+{
+#ifdef MULTITHREADED_OUTRO_SORT
+    available_threads = available_threads_;
+#endif
+}
+
+/******************************************************************************
+ * Set the minimum size of an array for which multithreading should be used
+ * while performing outro sort. If multithreading is not supported, this
+ * function does nothing.
+ *
+ * @param multithreading_threshold_
+ *****************************************************************************/
+void
+outro_sort_set_multithreading_threshold(size_t multithreading_threshold_)
+{
+#ifdef MULTITHREADED_OUTRO_SORT
+    multithreading_threshold = multithreading_threshold_;
+#endif
+}
 
 /******************************************************************************
  * Exchange the integers stored at the given addresses.
@@ -135,13 +164,13 @@ outro_sort(int *begin, int *end)
 #ifdef MULTITHREADED_OUTRO_SORT
     thrd_t worker;
     int wstatus = thrd_error;
-    if(begin + 32768L <= ploc && active_threads < 32)
+    if(begin + multithreading_threshold <= ploc && available_threads > 1)
     {
         struct Interval interval = {.begin=begin, .end=ploc};
         wstatus = thrd_create(&worker, outro_sort_, &interval);
         if(wstatus == thrd_success)
         {
-            ++active_threads;
+            --available_threads;
         }
     }
     if(wstatus != thrd_success)
@@ -158,7 +187,7 @@ outro_sort(int *begin, int *end)
     if(wstatus == thrd_success)
     {
         thrd_join(worker, NULL);
-        --active_threads;
+        ++available_threads;
     }
 #endif
 }

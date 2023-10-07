@@ -6,11 +6,9 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define ITERATIONS 16
+#include "outro_sort.h"
 
-void insertion_sort(int *, int *);
-void outro_sort(int *, int *);
-void std_sort(int *, int *);
+#define ITERATIONS 16
 
 /******************************************************************************
  * Populate the array with random values.
@@ -100,6 +98,9 @@ main(int const argc, char const *argv[])
             arr_size = arr_size_;
         }
     }
+
+    outro_sort_set_available_threads(32);
+    outro_sort_set_multithreading_threshold(32768U);
 
     srand(time(NULL));
     test(outro_sort, arr_size);
