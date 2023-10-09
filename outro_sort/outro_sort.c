@@ -98,7 +98,7 @@ insertion_sort(int *begin, int *end)
  *     or equal to the pivot.
  *****************************************************************************/
 static int *
-partition(int *begin, int *end)
+outro_sort_partition(int *begin, int *end)
 {
     // Try not pick the least or greatest element as the pivot.
     int *middle = (end - 1 - begin) / 2 + begin;
@@ -144,7 +144,7 @@ partition(int *begin, int *end)
  * @return Ignored.
  *****************************************************************************/
 static int
-outro_sort_(void *interval_)
+outro_sort_exec(void *interval_)
 {
     struct Interval *interval = interval_;
     outro_sort(interval->begin, interval->end);
@@ -162,13 +162,13 @@ outro_sort_(void *interval_)
  * @return 0 if the thread was started, else -1.
  *****************************************************************************/
 static int
-outro_sort__(int *begin, int *end, void *thr)
+outro_sort_dispatch(int *begin, int *end, void *thr)
 {
 #ifdef MULTITHREADED_OUTRO_SORT
     if(begin + multithreading_threshold <= end && available_threads > 1)
     {
         struct Interval interval = {.begin=begin, .end=end};
-        if(thrd_create(thr, outro_sort_, &interval) == thrd_success)
+        if(thrd_create(thr, outro_sort_exec, &interval) == thrd_success)
         {
             --available_threads;
             return 0;
@@ -195,14 +195,14 @@ outro_sort(int *begin, int *end)
         insertion_sort(begin, end);
         return;
     }
-    int *ploc = partition(begin, end);
+    int *ploc = outro_sort_partition(begin, end);
 
 #ifdef MULTITHREADED_OUTRO_SORT
     thrd_t worker;
 #else
     int worker;
 #endif
-    int wstatus = outro_sort__(begin, ploc, &worker);
+    int wstatus = outro_sort_dispatch(begin, ploc, &worker);
     outro_sort(ploc, end);
 
 #ifdef MULTITHREADED_OUTRO_SORT
