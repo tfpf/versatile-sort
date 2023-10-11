@@ -167,8 +167,7 @@ outro_sort_dispatch(int *begin, int *end, void *thr)
 #ifdef MULTITHREADED_OUTRO_SORT
     if(begin + multithreading_threshold <= end && available_threads > 1)
     {
-        struct Interval interval = {.begin=begin, .end=end};
-        if(thrd_create(thr, outro_sort_exec, &interval) == thrd_success)
+        if(thrd_create(thr, outro_sort_exec, &(struct Interval){.begin=begin, .end=end}) == thrd_success)
         {
             --available_threads;
             return 0;
