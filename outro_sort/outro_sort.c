@@ -18,32 +18,22 @@ struct Interval
 };
 
 /******************************************************************************
- * Set the number of threads to use while performing outro sort. (This need not
- * be equal to the number of logical processors; typically, using a much larger
- * number will significantly improve performance.) If multithreading is not
- * supported, this function does nothing.
+ * Configure outro sort.
  *
- * @param available_threads_
+ * @param available_threads_ Maximum number of simultaneously active threads to
+ *     use. This need not be equal to the number of logical processors;
+ *     typically, using a much larger number will significantly improve
+ *     performance. If multithreading is not supported, this argument is
+ *     ignored.
+ * @param multithreading_threshold_ Minimum size of a subarray for which
+ *     multithreading should be used. If multithreading is not supported, this
+ *     argument is ignored.
  *****************************************************************************/
 void
-outro_sort_set_available_threads(int available_threads_)
+outro_sort_configure(int available_threads_, size_t multithreading_threshold_)
 {
 #ifdef MULTITHREADED_OUTRO_SORT
     available_threads = available_threads_;
-#endif
-}
-
-/******************************************************************************
- * Set the minimum size of an array for which multithreading should be used
- * while performing outro sort. If multithreading is not supported, this
- * function does nothing.
- *
- * @param multithreading_threshold_
- *****************************************************************************/
-void
-outro_sort_set_multithreading_threshold(size_t multithreading_threshold_)
-{
-#ifdef MULTITHREADED_OUTRO_SORT
     multithreading_threshold = multithreading_threshold_;
 #endif
 }
