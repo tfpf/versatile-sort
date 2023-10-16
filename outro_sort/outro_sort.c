@@ -100,11 +100,7 @@ outro_sort_partition(int *begin, int *end)
     {
         swap(val, val + 2);
     }
-    if(val[1] > val[2])
-    {
-        swap(val + 1, val + 2);
-    }
-    int pivot_val = val[1];
+    int pivot_val = val[1] < val[2] ? val[1] : val[2];
 
     for(;; ++begin, --end)
     {
