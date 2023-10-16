@@ -85,9 +85,9 @@ insertion_sort(int *begin, int *end)
  * @return Pivot.
  *****************************************************************************/
 static int
-outro_sort_pivot(int *begin, int *end)
+outro_sort_pivot(int const *begin, int const *end)
 {
-    int *middle = (end - 1 - begin) / 2 + begin;
+    int const *middle = (end - 1 - begin) / 2 + begin;
     int val[] = {*begin, *middle, *(end - 1)};
     if(val[0] > val[1])
     {
