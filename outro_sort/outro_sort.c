@@ -77,6 +77,30 @@ insertion_sort(int *begin, int *end)
 }
 
 /******************************************************************************
+ * Pick a pivot. Try to avoid the least and greatest numbers.
+ *
+ * @param begin Pointer to the first element.
+ * @param end Pointer to one past the last element.
+ *
+ * @return Pivot.
+ *****************************************************************************/
+static int
+outro_sort_pivot(int *begin, int *end)
+{
+    int *middle = (end - 1 - begin) / 2 + begin;
+    int val[] = {*begin, *middle, *(end - 1)};
+    if(val[0] > val[1])
+    {
+        swap(val, val + 1);
+    }
+    if(val[0] > val[2])
+    {
+        swap(val, val + 2);
+    }
+    return val[1] < val[2] ? val[1] : val[2];
+}
+
+/******************************************************************************
  * Apply Hoare's partioning scheme to a subarray: group all elements less than
  * the pivot (and possibly some elements equal to it) on one side of the pivot.
  *
@@ -89,19 +113,7 @@ insertion_sort(int *begin, int *end)
 static int *
 outro_sort_partition(int *begin, int *end)
 {
-    // Try not pick the least or greatest element as the pivot.
-    int *middle = (end - 1 - begin) / 2 + begin;
-    int val[] = {*begin, *middle, *(end - 1)};
-    if(val[0] > val[1])
-    {
-        swap(val, val + 1);
-    }
-    if(val[0] > val[2])
-    {
-        swap(val, val + 2);
-    }
-    int pivot_val = val[1] < val[2] ? val[1] : val[2];
-
+    int pivot_val = outro_sort_pivot(begin, end);
     for(;; ++begin, --end)
     {
         while(*begin < pivot_val)
