@@ -20,11 +20,10 @@ struct Interval
 /******************************************************************************
  * Configure outro sort.
  *
- * @param available_threads_ Maximum number of simultaneously active threads to
- *     use. This need not be equal to the number of logical processors;
- *     typically, using a much larger number will significantly improve
- *     performance. If multithreading is not supported, this argument is
- *     ignored.
+ * @param available_threads_ Maximum number of simultaneously active threads.
+ *     This need not be equal to the number of logical processors; typically,
+ *     using a much larger number will significantly improve performance. If
+ *     multithreading is not supported, this argument is ignored.
  * @param multithreading_threshold_ Minimum size of a subarray for which
  *     multithreading should be used. If multithreading is not supported, this
  *     argument is ignored.
