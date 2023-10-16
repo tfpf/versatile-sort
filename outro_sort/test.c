@@ -99,9 +99,7 @@ main(int const argc, char const *argv[])
         }
     }
 
-    outro_sort_set_available_threads(32);
-    outro_sort_set_multithreading_threshold(32768U);
-
+    outro_sort_configure(32, 32768U);
     srand(time(NULL));
     test(outro_sort, arr_size);
     benchmark(outro_sort, arr_size);
