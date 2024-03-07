@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
 
@@ -7,34 +8,99 @@
 #define MULTITHREADED_OUTRO_SORT
 #include <stdatomic.h>
 #include <threads.h>
-static atomic_int available_threads = 32;
-static size_t multithreading_threshold = 32768U;
 #endif
+
+#define WORKERS 32
 
 struct Interval
 {
     int *begin;
     int *end;
 };
+struct pool_t
+{
+    size_t head, tail;
+    struct Interval work[WORKERS];
+    thrd_t worker[WORKERS];
+    mtx_t lock;
+    cnd_t get_ok, put_ok;
+};
+struct completion_t
+{
+    size_t remaining;
+    mtx_t lock;
+    cnd_t exit_ok;
+};
+
+static struct pool_t pool;
+static struct completion_t completion;
 
 /******************************************************************************
- * Configure outro sort.
+ * Check whether the thread pool task list is full.
  *
- * @param available_threads_ Maximum number of simultaneously active threads.
- *     This need not be equal to the number of logical processors; typically,
- *     using a much larger number will significantly improve performance. If
- *     multithreading is not supported, this argument is ignored.
- * @param multithreading_threshold_ Minimum size of a subarray for which
- *     multithreading should be used. If multithreading is not supported, this
- *     argument is ignored.
+ * @return
+ *****************************************************************************/
+bool
+pool_full(void)
+{
+    return (pool.tail + 1) % WORKERS == pool.head;
+}
+
+/******************************************************************************
+ * Check whether the thread pool task list is empty.
+ *
+ * @return
+ *****************************************************************************/
+bool
+pool_empty(void)
+{
+    return pool.tail == pool.head;
+}
+
+/******************************************************************************
+ * Remove an element from the thread pool task list. Block if necessary.
+ *
+ * @param interval
  *****************************************************************************/
 void
-outro_sort_configure(int available_threads_, size_t multithreading_threshold_)
+pool_get(struct Interval *interval)
 {
-#ifdef MULTITHREADED_OUTRO_SORT
-    available_threads = available_threads_;
-    multithreading_threshold = multithreading_threshold_;
-#endif
+    mtx_lock(&pool.lock);
+    while(pool_empty())
+    {
+        cnd_wait(&pool.get_ok, &pool.lock);
+    }
+    *interval = pool.work[pool.head];
+    pool.head = (pool.head + 1) % WORKERS;
+    mtx_unlock(&pool.lock);
+    cnd_signal(&pool.put_ok);
+printf("Got work.\n");
+}
+
+/******************************************************************************
+ * Insert an element into the thread pool task list. Exit without blocking if
+ * this is not possible.
+ *
+ * @param interval
+ *
+ * @return
+ *****************************************************************************/
+int
+pool_put(struct Interval *interval)
+{
+    mtx_lock(&pool.lock);
+    if(pool_full())
+    {
+printf("Could not put work.\n");
+        mtx_unlock(&pool.lock);
+        return -1;
+    }
+    pool.work[pool.tail] = *interval;
+    pool.tail = (pool.tail + 1) % WORKERS;
+    mtx_unlock(&pool.lock);
+    cnd_signal(&pool.get_ok);
+printf("Put work.\n");
+    return 0;
 }
 
 /******************************************************************************
@@ -132,47 +198,92 @@ outro_sort_partition(int *begin, int *end)
     }
 }
 
-#ifdef MULTITHREADED_OUTRO_SORT
 /******************************************************************************
- * Helper function to perform outro sort.
- *
- * @param interval_ Sort range.
- *
- * @return Ignored.
  *****************************************************************************/
-static int
-outro_sort_exec(void *interval_)
+static void
+outro_sort_(int *begin, int *end)
 {
-    struct Interval *interval = interval_;
-    outro_sort(interval->begin, interval->end);
-    thrd_exit(EXIT_SUCCESS);
+    if(begin + 16 >= end)
+    {
+        insertion_sort(begin, end);
+        mtx_lock(&completion.lock);
+        completion.remaining -= end - begin;
+        size_t remaining = completion.remaining;
+        mtx_unlock(&completion.lock);
+        if(remaining == 0)
+        {
+printf("Exit signalled.\n");
+            cnd_signal(&completion.exit_ok);
+        }
+        return;
+    }
+    int *ploc = outro_sort_partition(begin, end);
+    if(pool_put(&(struct Interval){.begin=begin, .end=ploc}) < 0)
+    {
+        outro_sort_(begin, ploc);
+    }
+    if(pool_put(&(struct Interval){.begin=ploc, .end=end}) < 0)
+    {
+        outro_sort_(ploc, end);
+    }
 }
-#endif
 
 /******************************************************************************
- * Helper function to perform outro sort in a separate thread (if possible).
- *
- * @param begin Pointer to the first element.
- * @param end Pointer to one past the last element.
- * @param worker Thread to start.
- *
- * @return 0 if the thread was started, else -1.
  *****************************************************************************/
 static int
-outro_sort_dispatch(int *begin, int *end, void *thr)
+outro_sort_work(void *_)
 {
-#ifdef MULTITHREADED_OUTRO_SORT
-    if(begin + multithreading_threshold <= end && available_threads > 1)
+    (void)_;
+    while(true)
     {
-        if(thrd_create(thr, outro_sort_exec, &(struct Interval){.begin=begin, .end=end}) == thrd_success)
+printf("Looking for work.\n");
+        struct Interval interval;
+        pool_get(&interval);
+printf("Picked up work.\n");
+        if(interval.begin == NULL || interval.end == NULL)
         {
-            --available_threads;
-            return 0;
+printf("Exiting.\n");
+            thrd_exit(EXIT_SUCCESS);
         }
+        outro_sort_(interval.begin, interval.end);
+printf("Finished work.\n");
     }
-#endif
-    outro_sort(begin, end);
-    return -1;
+}
+
+
+static void
+outro_sort_init(int const *begin, int const *end)
+{
+    pool.head = pool.tail = 0;
+    for(int i = 0; i < WORKERS; ++i)
+    {
+        thrd_create(pool.worker + i, outro_sort_work, NULL);
+    }
+    mtx_init(&pool.lock, mtx_plain);
+    cnd_init(&pool.get_ok);
+    cnd_init(&pool.put_ok);
+
+    completion.remaining = end - begin;
+    mtx_init(&completion.lock, mtx_plain);
+    cnd_init(&completion.exit_ok);
+}
+
+static void
+outro_sort_deinit(void)
+{
+    mtx_lock(&completion.lock);
+    while(completion.remaining != 0)
+    {
+        cnd_wait(&completion.exit_ok, &completion.lock);
+    }
+    for(int i = 0; i < WORKERS; ++i)
+    {
+        pool_put(&(struct Interval){.begin=NULL, .end=NULL});
+    }
+    for(int i = 0; i < WORKERS; ++i)
+    {
+        thrd_join(pool.worker[i], NULL);
+    }
 }
 
 /******************************************************************************
@@ -186,26 +297,7 @@ outro_sort_dispatch(int *begin, int *end, void *thr)
 void
 outro_sort(int *begin, int *end)
 {
-    if(begin + 16 >= end)
-    {
-        insertion_sort(begin, end);
-        return;
-    }
-    int *ploc = outro_sort_partition(begin, end);
-
-#ifdef MULTITHREADED_OUTRO_SORT
-    thrd_t worker;
-#else
-    int worker;
-#endif
-    int wstatus = outro_sort_dispatch(begin, ploc, &worker);
-    outro_sort(ploc, end);
-
-#ifdef MULTITHREADED_OUTRO_SORT
-    if(wstatus == 0)
-    {
-        thrd_join(worker, NULL);
-        ++available_threads;
-    }
-#endif
+    outro_sort_init(begin, end);
+    pool_put(&(struct Interval){.begin=begin, .end=end});
+    outro_sort_deinit();
 }
